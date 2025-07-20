@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using TMPro;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Windows;
 
@@ -64,7 +63,7 @@ public class NetworkDebugConsole : MonoBehaviour
         SetDebugString("Client disconnected with id: " + clientId);
     }
 
-    private void SetDebugString(string str) {
+    public void SetDebugString(string str) {    
         string[] lines = _tmpText.text.Split(new[] { '\n' }, StringSplitOptions.None);
         if (_lineCount >= 2)
         {
