@@ -1,7 +1,13 @@
 using System;
 using System.Linq;
+using System.Net.Security;
+using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Lobbies;
+using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.Windows;
 
@@ -14,7 +20,8 @@ public class NetworkDebugConsole : MonoBehaviour
         Disconnected,
     }
     public event Action<ulong, ConnectionStatus> OnClientConnection;
-    [SerializeField] private TMP_Text _tmpText;
+    [SerializeField] private TMP_Text _debugConsoet;
+    [SerializeField] private TMP_Text _joinCode;
     private int _lineCount = 0;
 
     private void Awake() {
@@ -58,22 +65,34 @@ public class NetworkDebugConsole : MonoBehaviour
             SetDebugString("Client connected with id: " + clientId);
         }
     }
-    private void OnNetworkDisconnectionEvent(ulong clientId) {
+    private async void OnNetworkDisconnectionEvent(ulong clientId) {
         OnClientConnection?.Invoke(clientId, ConnectionStatus.Disconnected);
+        try
+        {
+            NetworkManager.Singleton.DisconnectClient(clientId);
+            // await LobbyService.Instance.RemovePlayerAsync(_joinCode.text, clientId);
+        }
+        catch (Exception e)
+        {
+            SetDebugString($"Error: {e.Message}");
+        }
         SetDebugString("Client disconnected with id: " + clientId);
     }
 
     public void SetDebugString(string str) {    
-        string[] lines = _tmpText.text.Split(new[] { '\n' }, StringSplitOptions.None);
+        string[] lines = _debugConsoet.text.Split(new[] { '\n' }, StringSplitOptions.None);
         if (_lineCount >= 2)
         {
-            int index = _tmpText.text.IndexOf(System.Environment.NewLine);
-            _tmpText.text = string.Join("\n", lines.Skip(1)); ;
+            int index = _debugConsoet.text.IndexOf(System.Environment.NewLine);
+            _debugConsoet.text = string.Join("\n", lines.Skip(1)); ;
             _lineCount--;
         }
-        _tmpText.text += DateTime.Now.ToString("HH:mm:ss") + " " + str + "\n";
+        _debugConsoet.text += DateTime.Now.ToString("HH:mm:ss") + " " + str + "\n";
         _lineCount++;
-        Debug.Log(_tmpText.text);
+        Debug.Log(_debugConsoet.text);
     }
 
+    public void SetJoingCode(string joingCode) {
+        _joinCode.text = $"Join Code: {joingCode}";
+    }
 }

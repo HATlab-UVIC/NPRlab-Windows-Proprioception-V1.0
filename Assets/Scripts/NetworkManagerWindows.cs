@@ -8,6 +8,7 @@ using Unity.Services.Multiplayer;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Unity.Services.Lobbies;
 
 public class NetworkManagerWindows : MonoBehaviour
 {
@@ -60,6 +61,7 @@ public class NetworkManagerWindows : MonoBehaviour
         _ActiveSession = await MultiplayerService.Instance.CreateSessionAsync(options);
         Debug.Log($"Session {_ActiveSession.Id} created! Join code: {_ActiveSession.Code}");
         NetworkDebugConsole.Singleton.SetDebugString($"Session {NetworkManager.Singleton.LocalClientId} created! Join code: {_ActiveSession.Code}");
+        NetworkDebugConsole.Singleton.SetJoingCode(_ActiveSession.Code);
     }
 
     private async Task LeaveSession() {
