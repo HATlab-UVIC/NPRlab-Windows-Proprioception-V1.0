@@ -4,10 +4,11 @@ using UnityEngine;
 
 public static class FixGlobalHash
 {
+#if UNITY_EDITOR
     [MenuItem("Tools/Fix NetworkObjects in Scene")]
     public static void FixNetworkObjectsInScene() {
         // var networkObjects = Object.FindObjectsOfType<NetworkObject>(true);
-        var networkObject = Object.FindAnyObjectByType<Control>();
+        var networkObject = Object.FindAnyObjectByType<ControlManager>();
         if (!networkObject.gameObject.scene.isLoaded) return;
 
         Debug.Log($"Object found. Name {networkObject.name}");
@@ -17,4 +18,5 @@ public static class FixGlobalHash
         hashField.uintValue = 0;
         serializedObject.ApplyModifiedProperties();
     }
+#endif
 }

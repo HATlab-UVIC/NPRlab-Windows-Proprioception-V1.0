@@ -189,8 +189,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5eed3bdab5f528d47ae54a3df3174e05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  _prefab01: {fileID: 5259650632667810936, guid: 4a55f17a971f3ab4984aac2a50fe7257, type: 3}
+  _prefabTarget: {fileID: 5259650632667810936, guid: 4a55f17a971f3ab4984aac2a50fe7257, type: 3}
+  _pivotDistance: 1
+  _pivotScale: 3
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
