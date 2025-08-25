@@ -43,9 +43,28 @@ public class ControlManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Alpha0 + i))
             {
-                SpawnByNumber(i);
-                break;
+                if (_targetArray[i- 1] == null)
+                {
+                    SpawnByNumber(i);
+                    break;
+                }
+                else {
+                    NetworkDebugConsole.Singleton.SetDebugString($"Target {i} already exist!");
+                }
             }
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ResetTest();
+        }
+    }
+
+    private void ResetTest() {
+        for (int i = 0; i < 9; i++)
+        {
+            DespawnCustomMessage(i + 1);
+            GameObject.Destroy(_targetArray[i]);
+            _targetArray[i] = null;
         }
     }
 
@@ -135,10 +154,22 @@ public class ControlManager : MonoBehaviour
     public void SpawnCustomMessage(int number) {
         using var writer = new FastBufferWriter(128, Allocator.Temp);
         writer.WriteValueSafe(number);
-        writer.WriteValueSafe(new FixedString64Bytes("Hi clients!"));
+        writer.WriteValueSafe(new FixedString64Bytes("Spawn"));
 
         NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
-            "HelloFromServer",
+            "SpawnFromServer",
+            NetworkManager.Singleton.ConnectedClientsIds,
+            writer
+        );
+    }
+
+    public void DespawnCustomMessage(int number) {
+        using var writer = new FastBufferWriter(128, Allocator.Temp);
+        writer.WriteValueSafe(number);
+        writer.WriteValueSafe(new FixedString64Bytes("Despawn"));
+
+        NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
+            "DespawnFromServer",
             NetworkManager.Singleton.ConnectedClientsIds,
             writer
         );
@@ -161,5 +192,6 @@ public class ControlManager : MonoBehaviour
         Debug.Log($"[Server] Received from {senderClientId}: {number}, {text}");
         NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {number}, {text}");
         GameObject.Destroy(_targetArray[number - 1]);
+        _targetArray[number - 1] = null;
     }
 }
