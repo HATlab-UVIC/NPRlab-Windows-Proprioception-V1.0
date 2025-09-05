@@ -21,7 +21,10 @@ public class ControlManager : MonoBehaviour
             throw new Exception($"Detected more than one instance of {nameof(NetworkDebugConsole)}! " +
                 $"Do you have more than one component attached to a {nameof(GameObject)}");
         }
-        Singleton = this;
+        else
+        {
+            Singleton = this;
+        }
     }
 
     void Start() {
@@ -43,13 +46,20 @@ public class ControlManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Alpha0 + i))
             {
-                if (_targetArray[i- 1] == null)
+                if (NetworkManagerWindows.Singleton._isConnected)
                 {
-                    SpawnByNumber(i);
-                    break;
+                    if (_targetArray[i- 1] == null)
+                    {
+                        SpawnByNumber(i);
+                        break;
+                    }
+                    else {
+                        NetworkDebugConsole.Singleton.SetDebugString($"Target {i} already exist!");
+                    }
                 }
-                else {
-                    NetworkDebugConsole.Singleton.SetDebugString($"Target {i} already exist!");
+                else
+                {
+                    NetworkDebugConsole.Singleton.SetDebugString($"Can't spawn {i}. Client is not connected!");
                 }
             }
         }
@@ -59,13 +69,14 @@ public class ControlManager : MonoBehaviour
         }
     }
 
-    private void ResetTest() {
+    public void ResetTest() {
         for (int i = 0; i < 9; i++)
         {
             DespawnCustomMessage(i + 1);
             GameObject.Destroy(_targetArray[i]);
             _targetArray[i] = null;
         }
+        NetworkDebugConsole.Singleton.SetDebugString("Reset");
     }
 
     public void SpawnByNumber(int number) {

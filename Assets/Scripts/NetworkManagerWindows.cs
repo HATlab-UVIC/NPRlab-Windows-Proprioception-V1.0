@@ -14,6 +14,7 @@ using static NetworkDebugConsole;
 
 public class NetworkManagerWindows : MonoBehaviour
 {
+    public static NetworkManagerWindows Singleton { get; private set; }
     [HideInInspector] public bool _isConnected = false;
     public event Action<ulong, ConnectionStatus> OnClientConnection;
     private ISession _activeSession;    
@@ -26,6 +27,18 @@ public class NetworkManagerWindows : MonoBehaviour
         {
             _activeSession = value;
             Debug.Log($"Active session: {_activeSession}");
+        }
+    }
+
+    private void Awake() {
+        if ( Singleton != null)
+        {
+            throw new Exception($"Detected more than one instance of {nameof(NetworkManagerWindows)}! " +
+                $"Do you have more than one component attached to a {nameof(GameObject)}");
+        }
+        else
+        {
+            Singleton = this;
         }
     }
 
@@ -69,9 +82,10 @@ public class NetworkManagerWindows : MonoBehaviour
         else if (NetworkManager.Singleton.ConnectedClientsIds.Contains(clientId))
         {
             NetworkDebugConsole.Singleton.SetDebugString("Client connected with id: " + clientId);
+            _isConnected = true;
         }
     }
-    private async void OnNetworkDisconnectionEvent(ulong clientId) {
+    private void OnNetworkDisconnectionEvent(ulong clientId) {
         OnClientConnection?.Invoke(clientId, ConnectionStatus.Disconnected);
         try
         {
@@ -83,6 +97,8 @@ public class NetworkManagerWindows : MonoBehaviour
             NetworkDebugConsole.Singleton.SetDebugString($"Error: {e.Message}");
         }
         NetworkDebugConsole.Singleton.SetDebugString("Client disconnected with id: " + clientId);
+        ControlManager.Singleton.ResetTest();
+        _isConnected = false;
     }
 
     private async Task<Dictionary<string, PlayerProperty>> GetPlayerProperties() {
