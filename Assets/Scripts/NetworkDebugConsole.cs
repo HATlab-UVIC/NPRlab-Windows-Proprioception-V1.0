@@ -19,7 +19,6 @@ public class NetworkDebugConsole : MonoBehaviour
         Connected,
         Disconnected,
     }
-    public event Action<ulong, ConnectionStatus> OnClientConnection;
     [SerializeField] private TMP_Text _debugConsoet;
     [SerializeField] private TMP_Text _joinCode;
     private int _lineCount = 0;
@@ -38,45 +37,6 @@ public class NetworkDebugConsole : MonoBehaviour
         {
             return;
         }
-        if (NetworkManager.Singleton == null)
-        {
-            throw new Exception($"There is no {nameof(NetworkManager)} for the {nameof(NetworkDebugConsole)} to do stuff with! " +
-                $"Please add a {nameof(NetworkManager)} to the scene.");
-        }
-        NetworkManager.Singleton.OnClientConnectedCallback += OnNetworkConnectionEvent;
-        NetworkManager.Singleton.OnClientDisconnectCallback += OnNetworkDisconnectionEvent;
-    }
-
-    private void OnDestroy() {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnNetworkConnectionEvent;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnNetworkDisconnectionEvent;
-        }
-    }
-
-    private void OnNetworkConnectionEvent(ulong clientId) {
-        OnClientConnection?.Invoke(clientId, ConnectionStatus.Connected);
-        if (NetworkManager.Singleton.LocalClientId == clientId && NetworkManager.Singleton.IsHost)
-        {
-            SetDebugString("Hosted with id: " + clientId);
-        }
-        else if (NetworkManager.Singleton.ConnectedClientsIds.Contains(clientId)) {
-            SetDebugString("Client connected with id: " + clientId);
-        }
-    }
-    private async void OnNetworkDisconnectionEvent(ulong clientId) {
-        OnClientConnection?.Invoke(clientId, ConnectionStatus.Disconnected);
-        try
-        {
-            NetworkManager.Singleton.DisconnectClient(clientId);
-            // await LobbyService.Instance.RemovePlayerAsync(_joinCode.text, clientId);
-        }
-        catch (Exception e)
-        {
-            SetDebugString($"Error: {e.Message}");
-        }
-        SetDebugString("Client disconnected with id: " + clientId);
     }
 
     public void SetDebugString(string str) {    
