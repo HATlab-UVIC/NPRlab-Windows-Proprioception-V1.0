@@ -86,6 +86,7 @@ public class ControlManager : MonoBehaviour
         {
             GameObject.Destroy(_target);
         }
+        OffsetsLineRenderersManager.Singleton.RemoveAllLineRenderers();
         DespawnAllMessage();
         NetworkDebugConsole.Singleton.SetDebugString("Reset");
     }
@@ -222,9 +223,13 @@ public class ControlManager : MonoBehaviour
         // Read data in the same order it was written
         reader.ReadValueSafe(out int number);
         reader.ReadValueSafe(out FixedString64Bytes text);
+        reader.ReadValueSafe(out Vector3 targetPosition);
+        reader.ReadValueSafe(out Vector3 capturePosition);
+        OffsetsLineRenderersManager.Singleton.AddRenderer(targetPosition, capturePosition);
 
-        Debug.Log($"[Server] Received from {senderClientId}: {number}, {text}");
-        NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {number}, {text}");
+
+        Debug.Log($"[Server] Received from {senderClientId}: {number}, {text}, {targetPosition}, {capturePosition}");
+        NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {number}, {text}, {targetPosition}, {capturePosition}");
         GameObject.Destroy(_targetArray[number - 1]);
         _targetArray[number - 1] = null;
     }
