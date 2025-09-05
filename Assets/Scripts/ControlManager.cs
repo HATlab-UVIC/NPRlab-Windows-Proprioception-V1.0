@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Netcode;
 using Unity.Services.Lobbies;
 using Unity.Services.Multiplayer;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -67,15 +68,25 @@ public class ControlManager : MonoBehaviour
         {
             ResetTest();
         }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ApplicationQuit();
+        }
+    }
+
+    private async void ApplicationQuit() {
+        ResetTest();
+        NetworkManager.Singleton.Shutdown();
+        await NetworkManagerWindows.Singleton.LeaveSession();
+        Application.Quit();
     }
 
     public void ResetTest() {
-        for (int i = 0; i < 9; i++)
+        foreach (GameObject _target in _targetArray)
         {
-            DespawnCustomMessage(i + 1);
-            GameObject.Destroy(_targetArray[i]);
-            _targetArray[i] = null;
+            GameObject.Destroy(_target);
         }
+        DespawnAllMessage();
         NetworkDebugConsole.Singleton.SetDebugString("Reset");
     }
 
@@ -181,6 +192,18 @@ public class ControlManager : MonoBehaviour
 
         NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
             "DespawnFromServer",
+            NetworkManager.Singleton.ConnectedClientsIds,
+            writer
+        );
+    }
+
+    public void DespawnAllMessage() {
+        using var writer = new FastBufferWriter(128, Allocator.Temp);
+        writer.WriteValueSafe(1);
+        writer.WriteValueSafe(new FixedString64Bytes("Despawn All"));
+
+        NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
+            "DespawnAllFromServer",
             NetworkManager.Singleton.ConnectedClientsIds,
             writer
         );

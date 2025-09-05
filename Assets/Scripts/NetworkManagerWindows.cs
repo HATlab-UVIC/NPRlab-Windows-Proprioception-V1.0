@@ -124,7 +124,7 @@ public class NetworkManagerWindows : MonoBehaviour
         NetworkDebugConsole.Singleton.SetJoingCode(_ActiveSession.Code);
     }
 
-    private async Task LeaveSession() {
+    public async Task LeaveSession() {
         if ( _ActiveSession != null )
         {
             try
