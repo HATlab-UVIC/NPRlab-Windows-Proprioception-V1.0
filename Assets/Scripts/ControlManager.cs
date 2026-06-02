@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Mathematics;
 using Unity.Netcode;
 using Unity.Services.Lobbies;
 using Unity.Services.Multiplayer;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class ControlManager : MonoBehaviour
 {
@@ -14,6 +17,8 @@ public class ControlManager : MonoBehaviour
     [SerializeField] private float _pivotDistance = 0.2f;
     [SerializeField] private float _pivotScale = 0.2f;
     private GameObject[] _targetArray = new GameObject[9];
+    private List<GameObject> _randomArray = new List<GameObject>();
+    private Dictionary<string, GameObject> _randomDict = new Dictionary<string, GameObject>();
     private Vector3 _pivotPosition;
 
     void Awake() {
@@ -38,6 +43,11 @@ public class ControlManager : MonoBehaviour
         {
             NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(
                 "CaptureFromClient", OnCaptureMessageReceived);
+        };
+        NetworkManager.Singleton.OnServerStarted += () =>
+        {
+            NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(
+                "CaptureRandomFromClient", OnCaptureRandomMessageReceived);
         };
         _pivotPosition = new Vector3(-_pivotScale, _pivotScale, 0);
     }
@@ -72,6 +82,10 @@ public class ControlManager : MonoBehaviour
         {
             ApplicationQuit();
         }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            SpawnRandom();
+        }
     }
 
     private async void ApplicationQuit() {
@@ -86,6 +100,11 @@ public class ControlManager : MonoBehaviour
         {
             GameObject.Destroy(_target);
         }
+        foreach((string Key, GameObject _randomTarget) in _randomDict)
+        {
+            GameObject.Destroy(_randomTarget);
+        }
+        _randomDict.Clear();
         OffsetsLineRenderersManager.Singleton.RemoveAllLineRenderers();
         DespawnAllMessage();
         NetworkDebugConsole.Singleton.SetDebugString("Reset");
@@ -102,7 +121,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             case 1:
                 instance = Instantiate(_prefabTarget);
@@ -110,7 +129,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             case 2:
                 instance = Instantiate(_prefabTarget);
@@ -118,7 +137,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             case 3:
                 instance = Instantiate(_prefabTarget);
@@ -126,7 +145,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             case 4:
                 instance = Instantiate(_prefabTarget);
@@ -134,7 +153,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             case 5:
                 instance = Instantiate(_prefabTarget);
@@ -142,7 +161,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             case 6:
                 instance = Instantiate(_prefabTarget);
@@ -150,7 +169,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             case 7:
                 instance = Instantiate(_prefabTarget);
@@ -158,7 +177,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             case 8:
                 instance = Instantiate(_prefabTarget);
@@ -166,7 +185,7 @@ public class ControlManager : MonoBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number} instantiated locally");
                 _targetArray[number] = instance;
                 number += 1;
-                SpawnCustomMessage(number);
+                SendSpawnByKeyPadMessage(number);
                 break;
             default:
                 NetworkDebugConsole.Singleton.SetDebugString("Not a valid number input");
@@ -174,10 +193,28 @@ public class ControlManager : MonoBehaviour
         }
     }
 
-    public void SpawnCustomMessage(int number) {
+    public void SpawnRandom() {
+        GameObject instance;
+        float x_random = Random.Range(0f, 1f);
+        float y_random = Random.Range(0f, 1f);
+        instance = Instantiate(_prefabTarget);
+        instance.transform.position = _pivotPosition + new Vector3(x_random * 2 * _pivotScale, - (1 - y_random) * 2 * _pivotScale, _pivotDistance);
+        string new_hash;
+        do
+        {
+            new_hash = Guid.NewGuid().ToString("N");
+
+        }
+        while (_randomDict.ContainsKey(new_hash));
+        _randomDict[new_hash] = instance;
+        NetworkDebugConsole.Singleton.SetDebugString($"Prefab instantiated randomly at {x_random}, {y_random}, index = {_randomArray.Count}");
+        SendSpawnRandomMessage(x_random, y_random, new_hash);
+    }
+
+    public void SendSpawnByKeyPadMessage(int number) {
         using var writer = new FastBufferWriter(128, Allocator.Temp);
+        writer.WriteValueSafe(new FixedString64Bytes("SpawnByKeyPad"));
         writer.WriteValueSafe(number);
-        writer.WriteValueSafe(new FixedString64Bytes("Spawn"));
 
         NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
             "SpawnFromServer",
@@ -185,6 +222,22 @@ public class ControlManager : MonoBehaviour
             writer
         );
     }
+
+
+    public void SendSpawnRandomMessage(float x, float y, string index) {
+        using var writer = new FastBufferWriter(128, Allocator.Temp);
+        writer.WriteValueSafe(new FixedString64Bytes("SpawnRandom"));
+        writer.WriteValueSafe(x);
+        writer.WriteValueSafe(y);
+        writer.WriteValueSafe(index);
+
+        NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
+            "SpawnRandomFromServer",
+            NetworkManager.Singleton.ConnectedClientsIds,
+            writer
+        );
+    }
+
 
     public void DespawnCustomMessage(int number) {
         using var writer = new FastBufferWriter(128, Allocator.Temp);
@@ -223,14 +276,27 @@ public class ControlManager : MonoBehaviour
         // Read data in the same order it was written
         reader.ReadValueSafe(out int number);
         reader.ReadValueSafe(out FixedString64Bytes text);
-        reader.ReadValueSafe(out Vector3 targetPosition);
-        reader.ReadValueSafe(out Vector3 capturePosition);
-        OffsetsLineRenderersManager.Singleton.AddRenderer(targetPosition, capturePosition);
+        reader.ReadValueSafe(out Vector3 offSetVector);
+        OffsetsLineRenderersManager.Singleton.AddRenderer(offSetVector, _targetArray[number].transform.position);
 
 
-        Debug.Log($"[Server] Received from {senderClientId}: {number}, {text}, {targetPosition}, {capturePosition}");
-        NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {number}, {text}, {targetPosition}, {capturePosition}");
-        GameObject.Destroy(_targetArray[number - 1]);
-        _targetArray[number - 1] = null;
+        Debug.Log($"[Server] Received from {senderClientId}: {number}, {text}, {offSetVector}");
+        NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {number}, {text}, {offSetVector}");
+        GameObject.Destroy(_targetArray[number]);
+        _targetArray[number] = null;
+    }
+
+    private void OnCaptureRandomMessageReceived(ulong senderClientId, FastBufferReader reader) {
+        // Read data in the same order it was written
+        reader.ReadValueSafe(out string hash);
+        reader.ReadValueSafe(out FixedString64Bytes text);
+        reader.ReadValueSafe(out Vector3 offSetVector);
+        OffsetsLineRenderersManager.Singleton.AddRenderer(offSetVector, _randomDict[hash].transform.position);
+
+
+        Debug.Log($"[Server] Received from {senderClientId}: {hash}, {text}, {offSetVector}");
+        NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {hash}, {text}, {offSetVector}");
+        GameObject.Destroy(_randomDict[hash]);
+        _randomDict.Remove(hash);
     }
 }

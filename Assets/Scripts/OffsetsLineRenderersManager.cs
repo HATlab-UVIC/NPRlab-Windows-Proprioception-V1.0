@@ -31,7 +31,7 @@ public class OffsetsLineRenderersManager : MonoBehaviour
         
     }
 
-    public void AddRenderer(Vector3 from, Vector3 to) {
+    public void AddRenderer(Vector3 offSetVector, Vector3 targetPosition) {
         GameObject _addedLineRendererGameObject = new GameObject();
         LineRenderer _addedLineRenderer = _addedLineRendererGameObject.AddComponent<LineRenderer>();
         _addedLineRenderer.startWidth = 0.1f;
@@ -39,8 +39,8 @@ public class OffsetsLineRenderersManager : MonoBehaviour
         _addedLineRenderer.useWorldSpace = true;
         _addedLineRenderer.material = _lineRendererMaterial;
         _addedLineRenderer.positionCount = 2;
-        _addedLineRenderer.SetPosition(0, from * _scale);
-        _addedLineRenderer.SetPosition(1, to * _scale);
+        _addedLineRenderer.SetPosition(0, targetPosition);
+        _addedLineRenderer.SetPosition(1, targetPosition + offSetVector * _scale);
         _addedLineRendererGameObject.transform.parent = transform;
         _lineRenderers.Add(_addedLineRenderer);
         _lineRendererGameObjects.Add(_addedLineRendererGameObject);
